@@ -2,6 +2,14 @@
 name = "async-graphql-dataloader"
 version = "0.1.0"
 edition = "2021"
+description = "A high-performance DataLoader implementation for async-graphql with batching and caching"
+authors = ["Cleiton Augusto Correa Bezerra <seu-email@dominio.com>"]
+license = "MIT"
+repository = "https://github.com/cleitonaugusto/async-graphql-dataloader"
+documentation = "https://docs.rs/async-graphql-dataloader"
+readme = "README.md"
+keywords = ["graphql", "dataloader", "async", "batch", "cache"]
+categories = ["asynchronous", "web-programming", "api-bindings"]
 
 [dependencies]
 async-trait = "0.1"
@@ -14,12 +22,13 @@ futures = "0.3"
 
 [features]
 default = []
-async-graphql = ["dep:async-graphql"]
+graphql = ["async-graphql"]
 
 [dev-dependencies]
 tokio = { version = "1.0", features = ["full"] }
-criterion = "0.5"
-futures = "0.3"
+
+[[example]]
+name = "basic_usage"
 
 [[example]]
 name = "axum_graphql"

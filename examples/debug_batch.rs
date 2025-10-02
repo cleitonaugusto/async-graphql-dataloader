@@ -1,3 +1,4 @@
+#![allow(dead_code)] // Silencia warnings de código não utilizado
 use async_graphql_dataloader::{DataLoader, BatchLoad};
 use std::collections::HashMap;
 use std::time::Instant;
