@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"attr":["async_trait"],"enum":["DataLoaderError"],"mod":["integrations"],"struct":["BatchStats","Batcher","Cache","DataLoader","Metrics","TelemetryCollector"],"trait":["BatchLoad"]};

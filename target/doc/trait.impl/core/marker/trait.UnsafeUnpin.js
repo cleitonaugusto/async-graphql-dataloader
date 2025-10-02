@@ -1,9 +1,0 @@
-(function() {
-    var implementors = Object.fromEntries([["async_graphql_dataloader",[["impl UnsafeUnpin for <a class=\"enum\" href=\"async_graphql_dataloader/enum.DataLoaderError.html\" title=\"enum async_graphql_dataloader::DataLoaderError\">DataLoaderError</a>",1,["async_graphql_dataloader::error::DataLoaderError"]],["impl UnsafeUnpin for <a class=\"struct\" href=\"async_graphql_dataloader/struct.BatchStats.html\" title=\"struct async_graphql_dataloader::BatchStats\">BatchStats</a>",1,["async_graphql_dataloader::batcher::BatchStats"]],["impl UnsafeUnpin for <a class=\"struct\" href=\"async_graphql_dataloader/struct.Metrics.html\" title=\"struct async_graphql_dataloader::Metrics\">Metrics</a>",1,["async_graphql_dataloader::batcher::Metrics"]],["impl UnsafeUnpin for <a class=\"struct\" href=\"async_graphql_dataloader/struct.TelemetryCollector.html\" title=\"struct async_graphql_dataloader::TelemetryCollector\">TelemetryCollector</a>",1,["async_graphql_dataloader::metrics::TelemetryCollector"]],["impl&lt;K, V&gt; UnsafeUnpin for <a class=\"struct\" href=\"async_graphql_dataloader/struct.Cache.html\" title=\"struct async_graphql_dataloader::Cache\">Cache</a>&lt;K, V&gt;",1,["async_graphql_dataloader::cache::Cache"]],["impl&lt;L&gt; UnsafeUnpin for <a class=\"struct\" href=\"async_graphql_dataloader/struct.Batcher.html\" title=\"struct async_graphql_dataloader::Batcher\">Batcher</a>&lt;L&gt;",1,["async_graphql_dataloader::batcher::Batcher"]],["impl&lt;L&gt; UnsafeUnpin for <a class=\"struct\" href=\"async_graphql_dataloader/struct.DataLoader.html\" title=\"struct async_graphql_dataloader::DataLoader\">DataLoader</a>&lt;L&gt;",1,["async_graphql_dataloader::loader::DataLoader"]]]]]);
-    if (window.register_implementors) {
-        window.register_implementors(implementors);
-    } else {
-        window.pending_implementors = implementors;
-    }
-})()
-//{"start":57,"fragment_lengths":[1648]}
