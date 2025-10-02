@@ -1,0 +1,25 @@
+[package]
+name = "async-graphql-dataloader"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-trait = "0.1"
+dashmap = "5.0"
+tokio = { version = "1.0", features = ["sync", "time", "macros", "rt-multi-thread"] }
+serde = { version = "1.0", features = ["derive"] }
+async-graphql = { version = "5.0", optional = true }
+serde_json = "1.0"
+futures = "0.3"
+
+[features]
+default = []
+async-graphql = ["dep:async-graphql"]
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["full"] }
+criterion = "0.5"
+futures = "0.3"
+
+[[example]]
+name = "axum_graphql"

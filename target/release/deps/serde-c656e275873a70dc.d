@@ -1,0 +1,14 @@
+/home/cleiton/projetos/projeto1_rust/async-graphql-dataloader/target/release/deps/serde-c656e275873a70dc.d: /home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /home/cleiton/projetos/projeto1_rust/async-graphql-dataloader/target/release/build/serde-14746f82ce53477e/out/private.rs
+
+/home/cleiton/projetos/projeto1_rust/async-graphql-dataloader/target/release/deps/libserde-c656e275873a70dc.rlib: /home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /home/cleiton/projetos/projeto1_rust/async-graphql-dataloader/target/release/build/serde-14746f82ce53477e/out/private.rs
+
+/home/cleiton/projetos/projeto1_rust/async-graphql-dataloader/target/release/deps/libserde-c656e275873a70dc.rmeta: /home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /home/cleiton/projetos/projeto1_rust/async-graphql-dataloader/target/release/build/serde-14746f82ce53477e/out/private.rs
+
+/home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs:
+/home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs:
+/home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs:
+/home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:
+/home/cleiton/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs:
+/home/cleiton/projetos/projeto1_rust/async-graphql-dataloader/target/release/build/serde-14746f82ce53477e/out/private.rs:
+
+# env-dep:OUT_DIR=/home/cleiton/projetos/projeto1_rust/async-graphql-dataloader/target/release/build/serde-14746f82ce53477e/out
