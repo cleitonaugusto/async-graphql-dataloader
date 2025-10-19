@@ -1,4 +1,3 @@
-// benches/minimal_bench.rs
 use async_graphql_dataloader::{BatchLoad, DataLoader};
 use criterion::{criterion_group, criterion_main, Criterion};
 use std::collections::HashMap;

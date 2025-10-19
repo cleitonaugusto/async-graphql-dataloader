@@ -1,4 +1,3 @@
-// benches/performance_comparison.rs
 use async_graphql_dataloader::{BatchLoad, DataLoader};
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use std::collections::HashMap;
@@ -71,7 +70,6 @@ fn bench_batch_sizes(c: &mut Criterion) {
     group.finish();
 }
 
-// Benchmark simplificado SEM spawn de tasks
 fn bench_concurrent_access(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
     let mut group = c.benchmark_group("concurrent_access");
@@ -81,10 +79,9 @@ fn bench_concurrent_access(c: &mut Criterion) {
             rt.block_on(async {
                 let loader = DataLoader::new(TestLoader::new(50));
 
-                // Múltiplas loads sequenciais (simula concorrência sem spawn)
                 let mut results = Vec::new();
                 for i in 0..100 {
-                    let result = loader.load(i as u64 % 20).await; // Apenas 20 itens únicos
+                    let result = loader.load(i as u64 % 20).await;
                     results.push(result);
                 }
                 criterion::black_box(results);
@@ -97,8 +94,7 @@ fn bench_concurrent_access(c: &mut Criterion) {
             rt.block_on(async {
                 let loader = DataLoader::new(TestLoader::new(50));
 
-                // Usa clones do DataLoader para tasks paralelas
-                let handles: Vec<_> = (0..10) // Apenas 10 tasks para não sobrecarregar
+                let handles: Vec<_> = (0..10)
                     .map(|i| {
                         let loader_clone = loader.clone();
                         tokio::spawn(async move { loader_clone.load(i as u64).await })
