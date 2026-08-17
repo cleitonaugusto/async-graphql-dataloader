@@ -94,3 +94,9 @@ pub struct RateLimitUsage {
     pub window_remaining: Duration,
     pub reset_in: Duration,
 }
+
+impl Default for RateLimiter {
+    fn default() -> Self {
+        Self::new()
+    }
+}

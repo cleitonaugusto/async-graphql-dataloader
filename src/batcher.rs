@@ -1,8 +1,8 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::{Mutex, oneshot, RwLock};
-use tokio::time::{sleep, Instant};
+use tokio::time::sleep;
 
 use crate::error::DataLoaderError;
 use crate::loader::BatchLoad;
@@ -15,12 +15,15 @@ struct PendingRequest<K, V> {
 }
 
 pub struct Batcher<L: BatchLoad> {
-    loader: Arc<L>,
-    pending: Mutex<VecDeque<PendingRequest<L::Key, L::Value>>>,
+    pub(crate) loader: Arc<L>,
+    // `pending` e `batch_task` são compartilhados entre clones: a task de
+    // despacho roda sobre um clone, e precisa enxergar a mesma fila em que
+    // `schedule` empilhou os `oneshot::Sender`.
+    pending: Arc<Mutex<VecDeque<PendingRequest<L::Key, L::Value>>>>,
     metrics: Arc<Metrics>,
     max_batch_size: usize,
     max_delay: Duration,
-    batch_task: Mutex<Option<tokio::task::JoinHandle<()>>>,
+    batch_task: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>,
 }
 
 #[derive(Clone, Debug)]
@@ -65,11 +68,11 @@ where
     pub fn new(loader: Arc<L>) -> Self {
         Self {
             loader,
-            pending: Mutex::new(VecDeque::new()),
+            pending: Arc::new(Mutex::new(VecDeque::new())),
             metrics: Arc::new(Metrics::new()),
             max_batch_size: 100,
-            max_delay: Duration::from_millis(16), // Otimizado para performance
-            batch_task: Mutex::new(None),
+            max_delay: Duration::from_millis(16),
+            batch_task: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -90,18 +93,18 @@ where
     pub async fn schedule(&self, key: L::Key) -> Result<L::Value, DataLoaderError> {
         let (tx, rx) = oneshot::channel();
         
-        let should_start_batch = {
+        let is_full = {
             let mut pending = self.pending.lock().await;
-            pending.push_back(PendingRequest { key: key.clone(), sender: tx });
-            
-            // Lógica inteligente de batching:
-            // - Se batch está cheio, processa imediatamente
-            // - Se é o primeiro item, inicia task background
-            pending.len() >= self.max_batch_size || pending.len() == 1
+            pending.push_back(PendingRequest { key, sender: tx });
+            pending.len() >= self.max_batch_size
         };
 
-        if should_start_batch {
-            self.start_batch_task().await;
+        if is_full {
+            // Lote cheio: despacha já, sem esperar a janela de tempo.
+            let _ = self.process_pending().await;
+        } else {
+            // Garante que há uma task agendada para despachar após max_delay.
+            self.ensure_batch_task().await;
         }
 
         match rx.await {
@@ -110,24 +113,30 @@ where
         }
     }
 
-    async fn start_batch_task(&self) {
+    async fn ensure_batch_task(&self) {
         let mut task_guard = self.batch_task.lock().await;
-        
+
         if task_guard.is_none() {
             let batcher = self.clone();
             let delay = self.max_delay;
-            
-            let handle = tokio::spawn(async move {
-                // Aguarda para agrupar mais requests
+
+            *task_guard = Some(tokio::spawn(async move {
+                // Aguarda para agrupar mais requests no mesmo lote.
                 sleep(delay).await;
-                batcher.process_pending().await;
-            });
-            
-            *task_guard = Some(handle);
+
+                // Drena a fila em lotes de até max_batch_size. O laço evita
+                // recursão entre process_pending e ensure_batch_task, que
+                // impediria o compilador de inferir `Send` para este future.
+                while batcher.process_pending().await {}
+
+                // Libera o slot: a próxima requisição abre uma nova janela.
+                *batcher.batch_task.lock().await = None;
+            }));
         }
     }
 
-    async fn process_pending(&self) {
+    /// Despacha um lote. Devolve `true` se ainda restou fila a processar.
+    async fn process_pending(&self) -> bool {
         let batch = {
             let mut pending = self.pending.lock().await;
             let batch_size = std::cmp::min(pending.len(), self.max_batch_size);
@@ -138,8 +147,9 @@ where
             self.process_batch(batch).await;
         }
 
-        // Limpa a task para permitir novos batches
-        *self.batch_task.lock().await = None;
+        // O guard precisa cair antes de qualquer await do chamador.
+        let remaining = !self.pending.lock().await.is_empty();
+        remaining
     }
 
     async fn process_batch(&self, batch: Vec<PendingRequest<L::Key, L::Value>>) {
@@ -184,11 +194,17 @@ where
     fn clone(&self) -> Self {
         Self {
             loader: Arc::clone(&self.loader),
-            pending: Mutex::new(VecDeque::new()),
+            pending: Arc::clone(&self.pending),
             metrics: Arc::clone(&self.metrics),
             max_batch_size: self.max_batch_size,
             max_delay: self.max_delay,
-            batch_task: Mutex::new(None),
+            batch_task: Arc::clone(&self.batch_task),
         }
+    }
+}
+
+impl Default for Metrics {
+    fn default() -> Self {
+        Self::new()
     }
 }

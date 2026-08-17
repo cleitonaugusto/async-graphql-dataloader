@@ -85,3 +85,9 @@ impl TelemetryCollector {
         }
     }
 }
+
+impl Default for TelemetryCollector {
+    fn default() -> Self {
+        Self::new()
+    }
+}

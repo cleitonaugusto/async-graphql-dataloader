@@ -1,92 +1,111 @@
 # async-graphql-dataloader
 
-🚀 **High-performance DataLoader implementation for async-graphql in Rust**
-
 [![Crates.io](https://img.shields.io/crates/v/async-graphql-dataloader)](https://crates.io/crates/async-graphql-dataloader)
+[![Documentation](https://docs.rs/async-graphql-dataloader/badge.svg)](https://docs.rs/async-graphql-dataloader)
 [![License: MIT/Apache-2.0](https://img.shields.io/badge/License-MIT%2FApache--2.0-blue.svg)](LICENSE-MIT)
-[![Rust](https://img.shields.io/badge/rust-1.60%2B-orange.svg)](https://www.rust-lang.org)
 
-## 🎯 **About the Project**
+A DataLoader implementation for Rust with automatic request batching and
+per-request caching, built on Tokio.
 
-**Created and developed by: [Cleiton Augusto Correa Bezerra](https://github.com/cleitonaugusto)**
+It addresses the N+1 query problem: instead of one backend call per field
+resolution, concurrent `load` calls made within a short time window are
+coalesced into a single batched call to your data source.
 
-This project solves one of the most common problems in GraphQL applications: the **N+1 problem**.
+> **Which DataLoader should you use?**
+> [`async-graphql`](https://docs.rs/async-graphql) ships its own DataLoader
+> behind its `dataloader` feature, and for most `async-graphql` projects that
+> is the right default — it is maintained alongside the framework and
+> integrates directly with its context.
+> This crate is a standalone alternative that also works outside of GraphQL:
+> any batchable key/value lookup can use it.
 
-### ⚡ **Why use this DataLoader?**
+## Installation
 
-- **🚀 Performance**: Intelligent batch loading and caching
-- **🦀 Safety**: Rust's memory safety guarantees
-- **⚡ Concurrency**: Native async/await with Tokio
-- **🔧 Flexible**: Easy integration with any data source
-
-## 📦 **Installation**
-
-Add this to your Cargo.toml:
+```toml
 [dependencies]
-async-graphql-dataloader = "0.1.0"
+async-graphql-dataloader = "0.2"
+```
 
-For async-graphql integration:
+With `async-graphql` integration:
+
+```toml
 [dependencies]
-async-graphql-dataloader = { version = "0.1.0", features = ["graphql"] }
+async-graphql-dataloader = { version = "0.2", features = ["graphql"] }
+```
 
-🚀 Quick Start
-use async_graphql_dataloader::{DataLoader, Loader};
+## Quick start
+
+```rust
+use async_graphql_dataloader::{BatchLoad, DataLoader};
 use std::collections::HashMap;
 
 struct UserLoader;
 
 #[async_trait::async_trait]
-impl Loader<i32> for UserLoader {
+impl BatchLoad for UserLoader {
+    type Key = i32;
     type Value = String;
-    type Error = std::convert::Infallible;
+    type Error = String;
 
-    async fn load(&self, keys: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
-        let mut users = HashMap::new();
-        for &key in keys {
-            users.insert(key, format!("User {}", key));
-        }
-        Ok(users)
+    async fn load(&self, keys: &[i32]) -> HashMap<i32, Result<String, String>> {
+        // One call to your database for the whole batch.
+        keys.iter().map(|&k| (k, Ok(format!("User {}", k)))).collect()
     }
 }
 
 #[tokio::main]
 async fn main() {
     let loader = DataLoader::new(UserLoader);
-    
-    // Automatic batching - these will be batched into one call
-    let user1 = loader.load(1).await;
-    let user2 = loader.load(2).await;
-    
-    println!("User 1: {:?}", user1);
-    println!("User 2: {:?}", user2);
+
+    // These two are coalesced into a single `load` call.
+    let (a, b) = tokio::join!(loader.load(1), loader.load(2));
+
+    println!("{:?} {:?}", a, b);
 }
-📚 Features
-✅ Automatic Batching: Multiple requests combined into single batches
+```
 
-✅ Intelligent Caching: Request-level caching with DashMap
+## Configuration
 
-✅ Async Ready: Built on Tokio async runtime
+```rust
+use std::time::Duration;
 
-✅ Type Safe: Full Rust type safety
+let loader = DataLoader::new(UserLoader)
+    .with_max_batch_size(50)               // flush once 50 keys are queued
+    .with_delay(Duration::from_millis(10)); // or after 10ms, whichever comes first
+```
 
-✅ Error Handling: Configurable error handling
+## What's included
 
-✅ async-graphql Integration: Seamless integration with async-graphql
+- **Automatic batching** — concurrent `load` calls are coalesced into one call
+- **Caching** — in-memory key/value cache with optional TTL (`Cache::with_ttl`)
+- **Rate limiting** — fixed-window limiter (`RateLimiter`), opt-in per loader
+- **Query cost analysis** — rule-based cost estimation (`QueryCostAnalyzer`), opt-in
+- **Telemetry** — batch/cache counters (`TelemetryCollector`)
+- **`sqlx` integration** — helper in `integrations::sqlx`
 
-🔧 Advanced Usage
-See the examples directory for more advanced usage patterns:
+All features run in-process. There is no distributed cache, no multi-tenant
+isolation layer, and no compliance tooling in this crate.
 
-Basic Usage
+## Examples
 
-Axum + GraphQL Integration
+See [`examples/`](examples/):
 
-📖 Documentation
-Full API documentation is available on docs.rs
+- [`basic_usage.rs`](examples/basic_usage.rs) — core batching and caching
+- [`axum_graphql.rs`](examples/axum_graphql.rs) — Axum + async-graphql wiring
+- [`debug_batch.rs`](examples/debug_batch.rs) — inspecting batch behaviour
 
-🤝 Contributing
-Contributions are welcome! Please feel free to submit pull requests or open issues.
+Run one with:
 
-📄 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+```bash
+cargo run --example basic_usage
+```
 
-Made with ❤️ and Rust
+## Status
+
+Maintained on a best-effort basis. Bug reports and pull requests are welcome;
+please open an issue before starting significant work.
+
+## License
+
+Licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE)
+at your option.

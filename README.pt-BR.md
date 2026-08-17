@@ -1,96 +1,112 @@
 # async-graphql-dataloader
 
-🚀 **Implementação de DataLoader de alta performance para async-graphql em Rust**
+[![Crates.io](https://img.shields.io/crates/v/async-graphql-dataloader)](https://crates.io/crates/async-graphql-dataloader)
+[![Documentação](https://docs.rs/async-graphql-dataloader/badge.svg)](https://docs.rs/async-graphql-dataloader)
+[![Licença: MIT/Apache-2.0](https://img.shields.io/badge/License-MIT%2FApache--2.0-blue.svg)](LICENSE-MIT)
 
-https://img.shields.io/crates/v/async-graphql-dataloader
-https://img.shields.io/badge/License-MIT-blue.svg
-https://img.shields.io/badge/rust-1.60%252B-orange.svg
-https://docs.rs/async-graphql-dataloader/badge.svg
+*[English version](README.md)*
 
-## 🎯 **Sobre o Projeto**
+Uma implementação de DataLoader para Rust com agrupamento automático de
+requisições (batching) e cache, construída sobre o Tokio.
 
-**Criado e desenvolvido por: [Cleiton Augusto Correa Bezerra](https://github.com/cleitonaugusto)**
+Ela resolve o problema N+1: em vez de uma chamada ao backend por resolução de
+campo, chamadas concorrentes a `load` feitas dentro de uma pequena janela de
+tempo são combinadas em uma única chamada em lote à sua fonte de dados.
 
-Este projeto resolve um dos problemas mais comuns em aplicações GraphQL: o **problema N+1**.
+> **Qual DataLoader usar?**
+> O [`async-graphql`](https://docs.rs/async-graphql) já traz o próprio
+> DataLoader por trás da feature `dataloader`, e para a maioria dos projetos
+> que usam `async-graphql` esse é o padrão correto — ele é mantido junto com o
+> framework e integra direto com o contexto dele.
+> Este crate é uma alternativa independente, que também funciona fora de
+> GraphQL: qualquer busca chave/valor agrupável pode usá-lo.
 
-### ⚡ **Por que usar este DataLoader?**
+## Instalação
 
-- **🚀 Performance**: Batch loading inteligente e cache
-- **🦀 Segurança**: Garantias de segurança de memória do Rust
-- **⚡ Concorrência**: Async/await nativo com Tokio
-- **🔧 Flexível**: Fácil integração com qualquer fonte de dados
-
-## 📦 **Instalação**
-
-Adicione ao seu Cargo.toml:
+```toml
 [dependencies]
-async-graphql-dataloader = "0.1.0"
+async-graphql-dataloader = "0.2"
+```
 
-Para integração com async-graphql:
+Com integração ao `async-graphql`:
+
+```toml
 [dependencies]
-async-graphql-dataloader = { version = "0.1.0", features = ["graphql"] }
+async-graphql-dataloader = { version = "0.2", features = ["graphql"] }
+```
 
-🚀 Começo Rápido
-use async_graphql_dataloader::{DataLoader, Loader};
+## Começo rápido
+
+```rust
+use async_graphql_dataloader::{BatchLoad, DataLoader};
 use std::collections::HashMap;
 
 struct UserLoader;
 
 #[async_trait::async_trait]
-impl Loader<i32> for UserLoader {
+impl BatchLoad for UserLoader {
+    type Key = i32;
     type Value = String;
-    type Error = std::convert::Infallible;
+    type Error = String;
 
-    async fn load(&self, keys: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
-        let mut users = HashMap::new();
-        for &key in keys {
-            users.insert(key, format!("Usuário {}", key));
-        }
-        Ok(users)
+    async fn load(&self, keys: &[i32]) -> HashMap<i32, Result<String, String>> {
+        // Uma única chamada ao banco para o lote inteiro.
+        keys.iter().map(|&k| (k, Ok(format!("Usuário {}", k)))).collect()
     }
 }
 
 #[tokio::main]
 async fn main() {
     let loader = DataLoader::new(UserLoader);
-    
-    // Carregamento em lote automático - serão combinados em uma chamada
-    let user1 = loader.load(1).await;
-    let user2 = loader.load(2).await;
-    
-    println!("Usuário 1: {:?}", user1);
-    println!("Usuário 2: {:?}", user2);
+
+    // Estas duas são combinadas em uma única chamada a `load`.
+    let (a, b) = tokio::join!(loader.load(1), loader.load(2));
+
+    println!("{:?} {:?}", a, b);
 }
+```
 
-📚 Funcionalidades
-✅ Carregamento em Lote Automático: Múltiplas requisições combinadas em lotes únicos
+## Configuração
 
-✅ Cache Inteligente: Cache por requisição com DashMap
+```rust
+use std::time::Duration;
 
-✅ Pronto para Async: Construído no runtime async Tokio
+let loader = DataLoader::new(UserLoader)
+    .with_max_batch_size(50)                // dispara ao acumular 50 chaves
+    .with_delay(Duration::from_millis(10)); // ou após 10ms, o que vier primeiro
+```
 
-✅ Type Safe: Segurança de tipos completa do Rust
+## O que está incluído
 
-✅ Tratamento de Erros: Tratamento de erros configurável
+- **Batching automático** — chamadas concorrentes a `load` viram uma só chamada
+- **Cache** — cache chave/valor em memória com TTL opcional (`Cache::with_ttl`)
+- **Rate limiting** — limitador de janela fixa (`RateLimiter`), opcional por loader
+- **Análise de custo de query** — estimativa por regras (`QueryCostAnalyzer`), opcional
+- **Telemetria** — contadores de lote e cache (`TelemetryCollector`)
+- **Integração `sqlx`** — helper em `integrations::sqlx`
 
-✅ Integração async-graphql: Integração perfeita com async-graphql
+Todos os recursos rodam em processo. Este crate **não** inclui cache
+distribuído, isolamento multi-tenant nem ferramentas de conformidade.
 
-🔧 Uso Avançado
-Veja o diretório examples para padrões de uso mais avançados:
+## Exemplos
 
-Uso Básico
+Veja o diretório [`examples/`](examples/):
 
-Integração Axum + GraphQL
+- [`basic_usage.rs`](examples/basic_usage.rs) — batching e cache básicos
+- [`axum_graphql.rs`](examples/axum_graphql.rs) — integração Axum + async-graphql
+- [`debug_batch.rs`](examples/debug_batch.rs) — inspecionando o comportamento dos lotes
 
-📖 Documentação
-Documentação completa da API disponível em docs.rs
+Para rodar:
 
-🤝 Contribuindo
-Contribuições são bem-vindas! Sinta-se à vontade para enviar pull requests ou abrir issues.
+```bash
+cargo run --example basic_usage
+```
 
-📄 Licença
-Este projeto está licenciado sob a licença MIT - veja o arquivo LICENSE para detalhes.
+## Status
 
-Feito com ❤️ e Rust
+Mantido conforme disponibilidade. Relatos de bug e pull requests são bem-vindos;
+por favor abra uma issue antes de começar um trabalho grande.
 
-English Version Available: This README is also available in English.
+## Licença
+
+Licenciado sob [MIT](LICENSE-MIT) ou [Apache-2.0](LICENSE-APACHE), à sua escolha.
