@@ -1,5 +1,5 @@
 #![allow(dead_code)] // Silencia warnings de código não utilizado
-use async_graphql_dataloader::{DataLoader, BatchLoad};
+use async_graphql_dataloader::{BatchLoad, DataLoader};
 use std::collections::HashMap;
 use std::time::Instant;
 
@@ -18,14 +18,21 @@ impl BatchLoad for UserLoader {
     type Error = String;
 
     async fn load(&self, keys: &[i32]) -> HashMap<i32, Result<User, String>> {
-        println!("🔥 BATCH EXECUTED - Loading {} users: {:?}", keys.len(), keys);
-        
+        println!(
+            "🔥 BATCH EXECUTED - Loading {} users: {:?}",
+            keys.len(),
+            keys
+        );
+
         keys.iter()
             .map(|&id| {
-                (id, Ok(User {
+                (
                     id,
-                    name: format!("User {}", id),
-                }))
+                    Ok(User {
+                        id,
+                        name: format!("User {}", id),
+                    }),
+                )
             })
             .collect()
     }
@@ -43,7 +50,7 @@ async fn main() {
     println!("1. Loading single user...");
     let result1 = user_loader.load(1).await;
     println!("   Result 1: {:?}", result1);
-    
+
     println!("2. Loading multiple users...");
     let result2 = user_loader.load(2).await;
     let result3 = user_loader.load(3).await;

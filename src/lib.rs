@@ -85,7 +85,9 @@ pub use async_trait::async_trait;
 /// ```
 #[macro_export]
 macro_rules! dataloader {
-    ($loader:expr) => { $crate::DataLoader::new($loader) };
+    ($loader:expr) => {
+        $crate::DataLoader::new($loader)
+    };
     ($loader:expr, $batch_size:expr) => {
         $crate::DataLoader::new($loader).with_max_batch_size($batch_size)
     };
@@ -105,7 +107,10 @@ where
             .field("max_batch_size", &self.max_batch_size)
             .field("delay_ms", &self.delay.as_millis())
             .field("has_rate_limiting", &self.rate_limiter.is_some())
-            .field("has_query_cost_analysis", &self.query_cost_analyzer.is_some())
+            .field(
+                "has_query_cost_analysis",
+                &self.query_cost_analyzer.is_some(),
+            )
             .finish()
     }
 }

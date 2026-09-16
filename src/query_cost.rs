@@ -1,8 +1,8 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
 
 #[derive(Clone)]
 pub struct QueryCostAnalyzer {
@@ -66,14 +66,16 @@ impl QueryCostAnalyzer {
         }
     }
 
-    pub fn with_max_cost_per_request(self, max_cost: u64) -> Self { // ⬅️ REMOVER mut
+    pub fn with_max_cost_per_request(self, max_cost: u64) -> Self {
+        // ⬅️ REMOVER mut
         Self {
             max_cost_per_request: max_cost,
             ..self
         }
     }
 
-    pub fn with_max_history_size(self, size: usize) -> Self { // ⬅️ REMOVER mut
+    pub fn with_max_history_size(self, size: usize) -> Self {
+        // ⬅️ REMOVER mut
         Self {
             max_history_size: size,
             ..self
@@ -91,24 +93,33 @@ impl QueryCostAnalyzer {
         let analyzer = Self::new();
 
         let default_rules = vec![
-            ("load".to_string(), CostRule {
-                base_cost: 1,
-                per_item_cost: 1,
-                max_items: Some(1000),
-                description: "Single item load".to_string(),
-            }),
-            ("load_many".to_string(), CostRule {
-                base_cost: 5,
-                per_item_cost: 1,
-                max_items: Some(500),
-                description: "Batch load multiple items".to_string(),
-            }),
-            ("load_batch".to_string(), CostRule {
-                base_cost: 10,
-                per_item_cost: 1,
-                max_items: Some(1000),
-                description: "Optimized batch load".to_string(),
-            }),
+            (
+                "load".to_string(),
+                CostRule {
+                    base_cost: 1,
+                    per_item_cost: 1,
+                    max_items: Some(1000),
+                    description: "Single item load".to_string(),
+                },
+            ),
+            (
+                "load_many".to_string(),
+                CostRule {
+                    base_cost: 5,
+                    per_item_cost: 1,
+                    max_items: Some(500),
+                    description: "Batch load multiple items".to_string(),
+                },
+            ),
+            (
+                "load_batch".to_string(),
+                CostRule {
+                    base_cost: 10,
+                    per_item_cost: 1,
+                    max_items: Some(1000),
+                    description: "Optimized batch load".to_string(),
+                },
+            ),
         ];
 
         for (op, rule) in default_rules {
@@ -178,7 +189,12 @@ impl QueryCostAnalyzer {
     }
 
     // MANTER o record_cost_history como está (já está correto)
-    async fn record_cost_history(&self, cost: &QueryCost, item_count: usize, client_id: Option<&str>) {
+    async fn record_cost_history(
+        &self,
+        cost: &QueryCost,
+        item_count: usize,
+        client_id: Option<&str>,
+    ) {
         let mut history = self.cost_history.write().await;
 
         history.push(CostHistoryEntry {
@@ -200,8 +216,13 @@ impl QueryCostAnalyzer {
         let now = SystemTime::now();
 
         let relevant_history: Vec<&CostHistoryEntry> = if let Some(window) = time_window {
-            history.iter()
-                .filter(|entry| now.duration_since(entry.timestamp).unwrap_or(Duration::from_secs(0)) <= window)
+            history
+                .iter()
+                .filter(|entry| {
+                    now.duration_since(entry.timestamp)
+                        .unwrap_or(Duration::from_secs(0))
+                        <= window
+                })
                 .collect()
         } else {
             history.iter().collect()
@@ -211,14 +232,17 @@ impl QueryCostAnalyzer {
         let total_cost: u64 = relevant_history.iter().map(|entry| entry.cost).sum();
         let avg_cost = if total_operations > 0 {
             total_cost / total_operations as u64
-        } else { 0 };
+        } else {
+            0
+        };
 
-        let operations_by_type: HashMap<String, usize> = relevant_history
-            .iter()
-            .fold(HashMap::new(), |mut acc, entry| {
-                *acc.entry(entry.operation.clone()).or_insert(0) += 1;
-                acc
-            });
+        let operations_by_type: HashMap<String, usize> =
+            relevant_history
+                .iter()
+                .fold(HashMap::new(), |mut acc, entry| {
+                    *acc.entry(entry.operation.clone()).or_insert(0) += 1;
+                    acc
+                });
 
         CostAnalytics {
             total_operations,
@@ -263,21 +287,33 @@ pub struct CostAnalytics {
 impl std::fmt::Display for QueryCostError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            QueryCostError::CostExceeded { actual, max_allowed, breakdown, operation } => {
+            QueryCostError::CostExceeded {
+                actual,
+                max_allowed,
+                breakdown,
+                operation,
+            } => {
                 write!(
                     f,
                     "Query cost exceeded for '{}': {}/{}. Breakdown: {:?}",
                     operation, actual, max_allowed, breakdown
                 )
             }
-            QueryCostError::TooManyItems { actual, max_allowed, operation } => {
+            QueryCostError::TooManyItems {
+                actual,
+                max_allowed,
+                operation,
+            } => {
                 write!(
                     f,
                     "Too many items in '{}': {}/{}",
                     operation, actual, max_allowed
                 )
             }
-            QueryCostError::InvalidOperation { operation, available_operations } => {
+            QueryCostError::InvalidOperation {
+                operation,
+                available_operations,
+            } => {
                 write!(
                     f,
                     "Invalid operation '{}'. Available: {:?}",

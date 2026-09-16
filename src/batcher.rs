@@ -1,13 +1,20 @@
 use std::collections::VecDeque;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::{Mutex, oneshot, RwLock};
+use tokio::sync::{oneshot, Mutex, RwLock};
 use tokio::time::sleep;
 
 use crate::error::DataLoaderError;
 use crate::loader::BatchLoad;
 
 type BatchResult<V> = oneshot::Sender<Result<V, DataLoaderError>>;
+
+/// Fila de requisições aguardando despacho, compartilhada entre clones.
+type PendingQueue<L> =
+    Arc<Mutex<VecDeque<PendingRequest<<L as BatchLoad>::Key, <L as BatchLoad>::Value>>>>;
+
+/// Slot da task de despacho em voo, compartilhado entre clones.
+type BatchTask = Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>;
 
 struct PendingRequest<K, V> {
     key: K,
@@ -19,11 +26,11 @@ pub struct Batcher<L: BatchLoad> {
     // `pending` e `batch_task` são compartilhados entre clones: a task de
     // despacho roda sobre um clone, e precisa enxergar a mesma fila em que
     // `schedule` empilhou os `oneshot::Sender`.
-    pending: Arc<Mutex<VecDeque<PendingRequest<L::Key, L::Value>>>>,
+    pending: PendingQueue<L>,
     metrics: Arc<Metrics>,
     max_batch_size: usize,
     max_delay: Duration,
-    batch_task: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>,
+    batch_task: BatchTask,
 }
 
 #[derive(Clone, Debug)]
@@ -58,8 +65,8 @@ pub struct BatchStats {
     pub average_batch_size: f64,
 }
 
-impl<L> Batcher<L> 
-where 
+impl<L> Batcher<L>
+where
     L: BatchLoad + 'static,
     L::Key: Clone + Eq + std::hash::Hash + std::fmt::Debug,
     L::Value: Clone,
@@ -92,7 +99,7 @@ where
 
     pub async fn schedule(&self, key: L::Key) -> Result<L::Value, DataLoaderError> {
         let (tx, rx) = oneshot::channel();
-        
+
         let is_full = {
             let mut pending = self.pending.lock().await;
             pending.push_back(PendingRequest { key, sender: tx });
@@ -154,7 +161,7 @@ where
 
     async fn process_batch(&self, batch: Vec<PendingRequest<L::Key, L::Value>>) {
         let keys: Vec<L::Key> = batch.iter().map(|req| req.key.clone()).collect();
-        
+
         if keys.is_empty() {
             return;
         }

@@ -20,8 +20,12 @@ impl fmt::Display for DataLoaderError {
             DataLoaderError::BatchError(msg) => write!(f, "Batch load error: {}", msg),
             DataLoaderError::KeyNotFound => write!(f, "Key not found in batch results"),
             DataLoaderError::Timeout => write!(f, "Timeout waiting for batch"),
-            DataLoaderError::RateLimitExceeded(details) => write!(f, "Rate limit exceeded: {}", details),
-            DataLoaderError::QueryCostExceeded(details) => write!(f, "Query cost exceeded: {}", details),
+            DataLoaderError::RateLimitExceeded(details) => {
+                write!(f, "Rate limit exceeded: {}", details)
+            }
+            DataLoaderError::QueryCostExceeded(details) => {
+                write!(f, "Query cost exceeded: {}", details)
+            }
         }
     }
 }
@@ -36,7 +40,7 @@ impl From<String> for DataLoaderError {
 
 // ✅ CORREÇÃO: MUDAR para pub e manter Display manual
 #[derive(Debug, Clone)]
-pub enum RateLimitError { 
+pub enum RateLimitError {
     LimitExceeded {
         key: String,
         max_requests: u64,
@@ -48,7 +52,12 @@ pub enum RateLimitError {
 impl fmt::Display for RateLimitError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            RateLimitError::LimitExceeded { key, max_requests, reset_in, retry_after } => {
+            RateLimitError::LimitExceeded {
+                key,
+                max_requests,
+                reset_in,
+                retry_after,
+            } => {
                 write!(
                     f,
                     "Rate limit exceeded for '{}': {}/{} requests. Reset in {:?} (retry after {}s)",

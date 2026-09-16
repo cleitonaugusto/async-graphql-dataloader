@@ -22,9 +22,13 @@ pub trait BatchLoad: Send + Sync {
     ) -> HashMap<Self::Key, Result<Self::Value, Self::Error>>;
 }
 
+/// Cache de resultados já resolvidos, indexado pela chave do loader.
+type ResultCache<L> =
+    Arc<Cache<<L as BatchLoad>::Key, Result<<L as BatchLoad>::Value, DataLoaderError>>>;
+
 pub struct DataLoader<L: BatchLoad> {
     batcher: Arc<Batcher<L>>,
-    cache: Arc<Cache<L::Key, Result<L::Value, DataLoaderError>>>,
+    cache: ResultCache<L>,
     pub(crate) max_batch_size: usize,
     pub(crate) delay: Duration,
     // Rate limiting para enterprise features
@@ -65,8 +69,7 @@ where
     pub fn with_max_batch_size(mut self, size: usize) -> Self {
         self.max_batch_size = size;
         // CORREÇÃO: Criar novo batcher com o tamanho correto
-        let new_batcher = Batcher::new(Arc::clone(&self.batcher.loader))
-            .with_max_batch_size(size);
+        let new_batcher = Batcher::new(Arc::clone(&self.batcher.loader)).with_max_batch_size(size);
         self.batcher = Arc::new(new_batcher);
         self
     }
@@ -74,28 +77,19 @@ where
     pub fn with_delay(mut self, delay: Duration) -> Self {
         self.delay = delay;
         // CORREÇÃO: Criar novo batcher com o delay correto
-        let new_batcher = Batcher::new(Arc::clone(&self.batcher.loader))
-            .with_max_delay(delay);
+        let new_batcher = Batcher::new(Arc::clone(&self.batcher.loader)).with_max_delay(delay);
         self.batcher = Arc::new(new_batcher);
         self
     }
 
     // Métodos para rate limiting (ENTERPRISE FEATURES)
-    pub fn with_rate_limiting(
-        mut self,
-        limiter: Arc<RateLimiter>,
-        key: String
-    ) -> Self {
+    pub fn with_rate_limiting(mut self, limiter: Arc<RateLimiter>, key: String) -> Self {
         self.rate_limiter = Some(limiter);
         self.rate_limit_key = Some(key);
         self
     }
 
-    pub fn with_rate_limit_config(
-        mut self,
-        max_requests: u64,
-        window: Duration,
-    ) -> Self {
+    pub fn with_rate_limit_config(mut self, max_requests: u64, window: Duration) -> Self {
         self.rate_limit_max_requests = max_requests;
         self.rate_limit_window = window;
         self
@@ -110,11 +104,14 @@ where
     pub async fn load(&self, key: L::Key) -> Result<L::Value, DataLoaderError> {
         // CORREÇÃO: Verifica rate limiting corretamente
         if let (Some(limiter), Some(limit_key)) = (&self.rate_limiter, &self.rate_limit_key) {
-            if let Err(e) = limiter.check_limit(
-                limit_key,
-                self.rate_limit_max_requests,
-                self.rate_limit_window
-            ).await {
+            if let Err(e) = limiter
+                .check_limit(
+                    limit_key,
+                    self.rate_limit_max_requests,
+                    self.rate_limit_window,
+                )
+                .await
+            {
                 return Err(DataLoaderError::from(e));
             }
         }
@@ -148,13 +145,17 @@ where
     pub async fn load_many(&self, keys: Vec<L::Key>) -> Vec<Result<L::Value, DataLoaderError>> {
         // CORREÇÃO: Usar clone() para os erros
         if let (Some(limiter), Some(limit_key)) = (&self.rate_limiter, &self.rate_limit_key) {
-            if let Err(e) = limiter.check_limit(
-                limit_key,
-                self.rate_limit_max_requests,
-                self.rate_limit_window
-            ).await {
+            if let Err(e) = limiter
+                .check_limit(
+                    limit_key,
+                    self.rate_limit_max_requests,
+                    self.rate_limit_window,
+                )
+                .await
+            {
                 // Se rate limit excedido, retorna erro para todas as keys
-                return keys.into_iter()
+                return keys
+                    .into_iter()
                     .map(|_| Err(DataLoaderError::from(e.clone()))) // ⬅️ CORREÇÃO: e.clone()
                     .collect();
             }
@@ -164,7 +165,8 @@ where
         if let Some(analyzer) = &self.query_cost_analyzer {
             if let Err(e) = analyzer.calculate_cost("load_many", keys.len(), None).await {
                 // Se custo excedido, retorna erro para todas as keys
-                return keys.into_iter()
+                return keys
+                    .into_iter()
                     .map(|_| Err(DataLoaderError::from(e.clone()))) // ⬅️ CORREÇÃO: e.clone()
                     .collect();
             }
@@ -182,18 +184,24 @@ where
     pub async fn load_batch(&self, keys: Vec<L::Key>) -> Result<Vec<L::Value>, DataLoaderError> {
         // CORREÇÃO: Usar clone() para os erros
         if let (Some(limiter), Some(limit_key)) = (&self.rate_limiter, &self.rate_limit_key) {
-            if let Err(e) = limiter.check_limit(
-                limit_key,
-                self.rate_limit_max_requests,
-                self.rate_limit_window
-            ).await {
+            if let Err(e) = limiter
+                .check_limit(
+                    limit_key,
+                    self.rate_limit_max_requests,
+                    self.rate_limit_window,
+                )
+                .await
+            {
                 return Err(DataLoaderError::from(e.clone())); // ⬅️ CORREÇÃO: e.clone()
             }
         }
 
         // CORREÇÃO: Usar clone() para os erros
         if let Some(analyzer) = &self.query_cost_analyzer {
-            if let Err(e) = analyzer.calculate_cost("load_batch", keys.len(), None).await {
+            if let Err(e) = analyzer
+                .calculate_cost("load_batch", keys.len(), None)
+                .await
+            {
                 return Err(DataLoaderError::from(e.clone())); // ⬅️ CORREÇÃO: e.clone()
             }
         }
@@ -236,7 +244,11 @@ where
     }
 
     // NOVO: Método para verificar custo de uma query sem executá-la
-    pub async fn estimate_cost(&self, operation: &str, item_count: usize) -> Result<crate::query_cost::QueryCost, QueryCostError> {
+    pub async fn estimate_cost(
+        &self,
+        operation: &str,
+        item_count: usize,
+    ) -> Result<crate::query_cost::QueryCost, QueryCostError> {
         if let Some(analyzer) = &self.query_cost_analyzer {
             analyzer.calculate_cost(operation, item_count, None).await
         } else {

@@ -28,7 +28,7 @@ impl RateLimiter {
         &self,
         key: &str,
         max_requests: u64,
-        window: Duration
+        window: Duration,
     ) -> Result<(), RateLimitError> {
         let mut limits = self.limits.write().await;
         let now = Instant::now();
@@ -43,8 +43,8 @@ impl RateLimiter {
         // Reset window if expired or configuration changed
         if now.duration_since(limit.window_start) > limit.window_duration
             || limit.max_requests != max_requests
-            || limit.window_duration != window {
-
+            || limit.window_duration != window
+        {
             limit.requests = 0;
             limit.window_start = now;
             limit.max_requests = max_requests;
@@ -71,7 +71,9 @@ impl RateLimiter {
 
         let now = Instant::now();
         let window_elapsed = now.duration_since(limit.window_start);
-        let window_remaining = limit.window_duration.checked_sub(window_elapsed)
+        let window_remaining = limit
+            .window_duration
+            .checked_sub(window_elapsed)
             .unwrap_or(Duration::from_secs(0));
 
         Some(RateLimitUsage {

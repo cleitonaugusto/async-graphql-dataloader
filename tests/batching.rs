@@ -149,6 +149,9 @@ async fn load_many_resolves_every_key() {
 
     assert_eq!(results.len(), 3);
     for (i, r) in results.into_iter().enumerate() {
-        assert_eq!(r.expect("load_many returned an error"), format!("v{}", i + 1));
+        assert_eq!(
+            r.expect("load_many returned an error"),
+            format!("v{}", i + 1)
+        );
     }
 }
