@@ -104,9 +104,33 @@ cargo run --example basic_usage
 
 ## Status
 
-Mantido conforme disponibilidade. Relatos de bug e pull requests são bem-vindos;
-por favor abra uma issue antes de começar um trabalho grande.
+Em manutenção ativa. Relatos de bug e pull requests são bem-vindos; por favor
+abra uma issue antes de começar um trabalho grande, e leia o
+[CONTRIBUTING.md](CONTRIBUTING.md) primeiro — contribuições exigem sign-off.
+
+> **Aviso sobre licença:** a 0.2.x é MIT OU Apache-2.0 e continua assim
+> permanentemente. A partir da 0.3.0 o projeto tem licença dupla: AGPL-3.0 ou
+> licença comercial paga. Se licença permissiva for requisito rígido para você,
+> fixe `async-graphql-dataloader = "0.2"`, ou use o DataLoader embutido no
+> `async-graphql` — ele é MIT OU Apache-2.0 e, para a maioria dos projetos com
+> `async-graphql`, é a escolha mais sensata de todo jeito.
 
 ## Licença
 
-Licenciado sob [MIT](LICENSE-MIT) ou [Apache-2.0](LICENSE-APACHE), à sua escolha.
+**Esta versão (0.2.x) é licenciada sob [MIT](LICENSE-MIT) OU
+[Apache-2.0](LICENSE-APACHE), à sua escolha.** Essa concessão é perpétua e não
+será revogada.
+
+**A partir da 0.3.0 o projeto passa a ter licença dupla:**
+[AGPL-3.0-or-later](LICENSE-AGPL-3.0) gratuitamente, ou uma
+[licença comercial](COMMERCIAL-LICENSE.md) paga, que remove a obrigação de
+divulgação de código-fonte da AGPL. As faixas comerciais começam em US$ 500/ano
+por organização.
+
+A AGPL basta para avaliação, uso pessoal e acadêmico, projetos licenciados sob
+AGPL, e qualquer coisa que você não exponha em rede fora da sua organização.
+Você precisa da licença comercial para embarcar a 0.3.0+ em um produto exposto
+em rede sem liberar o código-fonte desse produto.
+
+Veja [LICENSING.md](LICENSING.md) para o quadro completo e
+[CONTRIBUTING.md](CONTRIBUTING.md) para o que isso significa em pull requests.

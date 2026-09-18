@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Announced
+
+- **Licensing change at 0.3.0.** From 0.3.0 this project will be dual-licensed
+  under AGPL-3.0-or-later or a paid commercial license. Version 0.2.0 and
+  everything before it stay under MIT OR Apache-2.0 permanently — that grant is
+  irrevocable and will not be withdrawn. The 0.1.0 dispatch fix therefore ships
+  free, under the permissive license, before the change takes effect. See
+  `LICENSING.md` and `COMMERCIAL-LICENSE.md`.
+- Contributions now require a sign-off (`git commit -s`) granting the
+  maintainer the right to license them commercially. See `CONTRIBUTING.md`.
+
 ## [0.2.0] - 2026-09-15
 
 ### Fixed

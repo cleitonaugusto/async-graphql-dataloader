@@ -102,10 +102,33 @@ cargo run --example basic_usage
 
 ## Status
 
-Maintained on a best-effort basis. Bug reports and pull requests are welcome;
-please open an issue before starting significant work.
+Actively maintained. Bug reports and pull requests are welcome; please open an
+issue before starting significant work, and read
+[CONTRIBUTING.md](CONTRIBUTING.md) first — contributions require a sign-off.
+
+> **Heads-up on licensing:** 0.2.x is MIT OR Apache-2.0 and stays that way
+> permanently. Starting at 0.3.0 the project is dual-licensed under AGPL-3.0 or
+> a paid commercial license. If a permissive license is a hard requirement for
+> you, pin `async-graphql-dataloader = "0.2"`, or use the DataLoader built into
+> `async-graphql` — it is MIT OR Apache-2.0 and, for most `async-graphql`
+> projects, the better default anyway.
 
 ## License
 
-Licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE)
-at your option.
+**This version (0.2.x) is licensed under [MIT](LICENSE-MIT) OR
+[Apache-2.0](LICENSE-APACHE), at your option.** That grant is perpetual and
+will not be withdrawn.
+
+**From 0.3.0 the project becomes dual-licensed:**
+[AGPL-3.0-or-later](LICENSE-AGPL-3.0) free of charge, or a paid
+[commercial license](COMMERCIAL-LICENSE.md) that lifts the AGPL's
+source-disclosure obligation. Commercial tiers start at $500/year per
+organization.
+
+The AGPL is enough for evaluation, personal and academic work, AGPL-licensed
+projects, and anything you don't expose over a network outside your
+organization. You need the commercial license to ship 0.3.0+ in a
+network-facing product without releasing that product's source.
+
+See [LICENSING.md](LICENSING.md) for the full picture, and
+[CONTRIBUTING.md](CONTRIBUTING.md) for what this means for pull requests.
